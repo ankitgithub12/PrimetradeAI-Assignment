@@ -1,4 +1,5 @@
 import Task from '../models/Task.js';
+import User from '../models/User.js';
 
 // @desc    Get all tasks for logged in user (Admins get all tasks)
 // @route   GET /api/v1/tasks
@@ -60,7 +61,15 @@ export const getTask = async (req, res, next) => {
 export const createTask = async (req, res, next) => {
   try {
     // Add user to req.body
-    req.body.user = req.user.id;
+    if (req.user.role === 'admin' && req.body.assigneeEmail) {
+      const assigneeUser = await User.findOne({ email: req.body.assigneeEmail });
+      if (!assigneeUser) {
+        return res.status(404).json({ success: false, error: 'Assignee email not found' });
+      }
+      req.body.user = assigneeUser._id;
+    } else {
+      req.body.user = req.user.id;
+    }
 
     const task = await Task.create(req.body);
 
@@ -87,6 +96,14 @@ export const updateTask = async (req, res, next) => {
     // Make sure user is task owner
     if (task.user.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'Not authorized to update this task' });
+    }
+
+    if (req.user.role === 'admin' && req.body.assigneeEmail) {
+      const assigneeUser = await User.findOne({ email: req.body.assigneeEmail });
+      if (!assigneeUser) {
+        return res.status(404).json({ success: false, error: 'Assignee email not found' });
+      }
+      req.body.user = assigneeUser._id;
     }
 
     task = await Task.findByIdAndUpdate(req.params.id, req.body, {

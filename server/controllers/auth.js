@@ -70,6 +70,30 @@ export const getMe = async (req, res, next) => {
   }
 };
 
+// @desc    Update user details
+// @route   PUT /api/v1/auth/updatedetails
+// @access  Private
+export const updateDetails = async (req, res, next) => {
+  try {
+    const fieldsToUpdate = {
+      name: req.body.name,
+      email: req.body.email
+    };
+
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+      new: true,
+      runValidators: true
+    });
+
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
 // @desc    Forgot password
 // @route   POST /api/v1/auth/forgotpassword
 // @access  Public
@@ -91,17 +115,38 @@ export const forgotPassword = async (req, res, next) => {
 
     await user.save({ validateBeforeSave: false });
 
-    // Create reset url
-    // Frontend URL
-    const resetUrl = `${req.protocol}://${req.get('host')}/resetpassword/${resetToken}`;
+    // Create reset url pointing to the React frontend
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const resetUrl = `${clientUrl}/resetpassword/${resetToken}`;
 
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a put request to: \n\n ${resetUrl}`;
+    const message = `You requested a password reset. Please go to this link to reset your password: \n\n ${resetUrl}`;
+    
+    // Beautiful HTML formatting for the email
+    const htmlMessage = `
+      <div style="font-family: 'Inter', Helvetica, Arial, sans-serif; max-w-md; margin: 0 auto; background-color: #f9fafb; padding: 40px 20px; text-align: center;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); max-width: 500px; margin: 0 auto;">
+          <h1 style="color: #4f46e5; margin-bottom: 20px; font-size: 28px; font-weight: 800;">TaskFlow</h1>
+          <h2 style="color: #111827; margin-bottom: 16px; font-size: 20px;">Password Reset Request</h2>
+          <p style="color: #4b5563; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+            We received a request to reset your password. If you didn't make this request, you can safely ignore this email.
+          </p>
+          <a href="${resetUrl}" style="display: inline-block; background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+            Reset Your Password
+          </a>
+          <p style="color: #9ca3af; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+            Or copy and paste this link into your browser:<br>
+            <span style="color: #6b7280; word-break: break-all;">${resetUrl}</span>
+          </p>
+        </div>
+      </div>
+    `;
 
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Password reset token',
-        message
+        subject: 'Password Reset from TaskFlow',
+        message,
+        html: htmlMessage
       });
 
       res.status(200).json({ success: true, data: 'Email sent' });

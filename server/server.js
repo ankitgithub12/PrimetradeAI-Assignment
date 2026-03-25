@@ -4,11 +4,18 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import connectDB from './config/db.js';
-import errorHandler from './middleware/error.js';
+
+// Security packages
+import helmet from 'helmet';
+import mongoSanitize from 'express-mongo-sanitize';
+import rateLimit from 'express-rate-limit';
+import hpp from 'hpp';
 
 // Route files
 import auth from './routes/auth.js';
 import tasks from './routes/tasks.js';
+
+import errorHandler from './middleware/error.js';
 
 // Load env vars
 dotenv.config();
@@ -18,8 +25,26 @@ connectDB();
 
 const app = express();
 
-// Middleware
+// Body parser
 app.use(express.json());
+
+// Sanitize data (prevent NoSQL Injection)
+app.use(mongoSanitize());
+
+// Set security headers (protects against XSS and sniffing)
+app.use(helmet());
+
+// Rate limiting (100 requests per 10 mins)
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, 
+  max: 100
+});
+app.use(limiter);
+
+// Prevent HTTP param pollution
+app.use(hpp());
+
+// Enable CORS
 app.use(cors());
 
 // Mount routers

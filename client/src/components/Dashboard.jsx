@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { format } from 'date-fns';
-import { Plus, Edit2, Trash2, LogOut, CheckCircle2, Clock, Circle, LayoutDashboard, Users, Activity, Target } from 'lucide-react';
+import { Plus, Edit2, Trash2, LogOut, CheckCircle2, Clock, Circle, LayoutDashboard, Users, Activity, Target, Calendar } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -12,7 +12,7 @@ const Dashboard = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [formData, setFormData] = useState({ title: '', description: '', status: 'pending' });
+  const [formData, setFormData] = useState({ title: '', description: '', status: 'pending', deadline: '', assigneeEmail: '' });
 
   useEffect(() => {
     fetchTasks();
@@ -37,11 +37,13 @@ const Dashboard = () => {
       setFormData({
         title: task.title,
         description: task.description,
-        status: task.status
+        status: task.status,
+        deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
+        assigneeEmail: typeof task.user === 'object' ? task.user.email : ''
       });
     } else {
       setEditingTask(null);
-      setFormData({ title: '', description: '', status: 'pending' });
+      setFormData({ title: '', description: '', status: 'pending', deadline: '', assigneeEmail: '' });
     }
     setIsModalOpen(true);
   };
@@ -116,13 +118,13 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="overflow-x-auto shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl border border-gray-100 bg-white">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-gray-50/50 text-gray-500 text-sm font-bold tracking-wider">
                   <th className="p-4 border-b border-gray-100">Task Title</th>
                   <th className="p-4 border-b border-gray-100">Assignee</th>
                   <th className="p-4 border-b border-gray-100">Status</th>
-                  <th className="p-4 border-b border-gray-100">Created At</th>
+                  <th className="p-4 border-b border-gray-100">Deadline</th>
                   <th className="p-4 border-b border-gray-100 text-right">Actions</th>
                 </tr>
               </thead>
@@ -131,9 +133,10 @@ const Dashboard = () => {
                   <tr key={task._id} className="hover:bg-gray-50/30 transition-colors">
                     <td className="p-4 font-bold text-gray-800 max-w-xs truncate">{task.title}</td>
                     <td className="p-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold">
-                        {typeof task.user === 'object' ? task.user.name : task.user}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-800 text-sm">{typeof task.user === 'object' ? task.user.name : task.user}</span>
+                        <span className="text-xs text-indigo-500">{typeof task.user === 'object' ? task.user.email : ''}</span>
+                      </div>
                     </td>
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
@@ -144,8 +147,14 @@ const Dashboard = () => {
                         {task.status.replace('-', ' ')}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-gray-500 font-medium">
-                      {format(new Date(task.createdAt), 'MMM dd')}
+                    <td className="p-4 text-sm font-bold text-gray-600">
+                      {task.deadline ? (
+                        <span className={`flex items-center gap-1.5 ${new Date(task.deadline) < new Date() && task.status !== 'completed' ? 'text-red-500' : ''}`}>
+                          <Calendar className="w-4 h-4" /> {format(new Date(task.deadline), 'MMM dd, yyyy')}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">No Deadline</span>
+                      )}
                     </td>
                     <td className="p-4 text-right">
                       <button onClick={() => handleOpenModal(task)} className="text-indigo-600 hover:text-indigo-800 p-2"><Edit2 className="w-4 h-4" /></button>
@@ -193,7 +202,7 @@ const Dashboard = () => {
             <LayoutDashboard className="w-10 h-10 text-indigo-400" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800 mb-2">Your slate is clean!</h3>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">You don't have any tasks right now. Ready to be productive?</p>
+          <p className="text-gray-500 mb-8 max-w-md mx-auto">You don't have any tasks assigned right now. Ready to be productive?</p>
           <button 
             onClick={() => handleOpenModal()}
             className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:from-purple-700 hover:to-indigo-700 font-bold transition-all shadow-md active:scale-95"
@@ -203,11 +212,14 @@ const Dashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {tasks.map(task => (
+          {tasks.map(task => {
+            const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'completed';
+            return (
             <div key={task._id} className="group bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden flex flex-col">
               
               <div className={`absolute top-0 left-0 w-full h-1.5 ${
                 task.status === 'completed' ? 'bg-emerald-500' :
+                isOverdue ? 'bg-rose-500' :
                 task.status === 'in-progress' ? 'bg-amber-500' :
                 'bg-gray-300'
               }`}></div>
@@ -215,13 +227,15 @@ const Dashboard = () => {
               <div className="flex justify-between items-start mb-4 pt-2">
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
                   task.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                  isOverdue ? 'bg-rose-100 text-rose-700' :
                   task.status === 'in-progress' ? 'bg-amber-100 text-amber-700' :
                   'bg-gray-100 text-gray-600'
                 }`}>
                   {task.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {task.status === 'in-progress' && <Clock className="w-3.5 h-3.5" />}
-                  {task.status === 'pending' && <Circle className="w-3.5 h-3.5" />}
-                  {task.status.replace('-', ' ')}
+                  {isOverdue && task.status !== 'completed' && <AlertCircle className="w-3.5 h-3.5" />}
+                  {!isOverdue && task.status === 'in-progress' && <Clock className="w-3.5 h-3.5" />}
+                  {!isOverdue && task.status === 'pending' && <Circle className="w-3.5 h-3.5" />}
+                  {isOverdue && task.status !== 'completed' ? 'Overdue' : task.status.replace('-', ' ')}
                 </span>
                 
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg">
@@ -237,13 +251,18 @@ const Dashboard = () => {
               <h3 className="font-extrabold text-xl text-gray-900 mb-3 line-clamp-2 leading-tight">{task.title}</h3>
               <p className="text-gray-500 text-sm mb-6 flex-grow line-clamp-3 leading-relaxed">{task.description}</p>
               
-              <div className="pt-4 border-t border-gray-100 mt-auto">
+              <div className="pt-4 border-t border-gray-100 mt-auto space-y-2">
+                {task.deadline && (
+                  <div className={`flex items-center text-xs font-bold ${isOverdue ? 'text-rose-500' : 'text-indigo-600'}`}>
+                    <Calendar className="w-3.5 h-3.5 mr-1.5" /> Due: {format(new Date(task.deadline), 'MMM dd, yyyy')}
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {format(new Date(task.createdAt), 'MMM dd, yyyy')}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Created {format(new Date(task.createdAt), 'MMM dd')}</span>
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>
@@ -258,7 +277,14 @@ const Dashboard = () => {
             <div className={`p-2.5 rounded-xl text-white ${user.role === 'admin' ? 'bg-gradient-to-br from-indigo-500 to-purple-600' : 'bg-gradient-to-br from-rose-400 to-orange-500'}`}>
               <LayoutDashboard className="w-6 h-6" />
             </div>
-            {user.role === 'admin' ? 'Admin Control Center' : 'My Workspace'}
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3">
+                {user.role === 'admin' ? 'Admin Control Center' : 'My Workspace'}
+                <span className={`px-2.5 py-1 text-xs uppercase tracking-wider font-black rounded-lg ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>
+                  {user.role}
+                </span>
+              </div>
+            </div>
           </h1>
           <p className="text-gray-500 mt-2 font-medium ml-1">
             {user.role === 'admin' ? 'Manage system tasks and oversee platform metrics.' : 'Track your personal progression and tasks.'}
@@ -270,12 +296,6 @@ const Dashboard = () => {
             className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 font-bold transition-all shadow-[0_4px_14px_0_rgb(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.18)] active:scale-[0.98]"
           >
             <Plus className="w-5 h-5" /> New Task
-          </button>
-          <button 
-            onClick={logout}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 font-bold transition-all active:scale-[0.98]"
-          >
-            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -322,25 +342,53 @@ const Dashboard = () => {
                 <textarea
                   required
                   maxLength={500}
-                  rows={4}
+                  rows={3}
                   placeholder="Provide context and details..."
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all resize-none"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Stage</label>
-                <select
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer"
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Stage</label>
+                  <select
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Deadline</label>
+                  <input
+                    type="date"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                    value={formData.deadline}
+                    onChange={(e) => setFormData({...formData, deadline: e.target.value})}
+                  />
+                </div>
               </div>
+
+              {user.role === 'admin' && (
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Delegate to User (Email)</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. test@example.com (Optional)"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                    value={formData.assigneeEmail}
+                    onChange={(e) => setFormData({...formData, assigneeEmail: e.target.value})}
+                  />
+                  <p className="text-xs text-gray-500 mt-2 font-medium">Leave blank to assign the task to yourself.</p>
+                </div>
+              )}
               
               <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-8">
                 <button
