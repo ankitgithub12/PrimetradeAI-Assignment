@@ -15,7 +15,14 @@ const sendEmail = async (options) => {
     text: options.message,
   };
 
-  await sgMail.send(msg);
+  try {
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('SendGrid Error:', error.response?.body || error.message);
+    throw new Error(
+      error.response?.body?.errors?.[0]?.message || 'Failed to send email via SendGrid. Check API Key and Verified Sender Email.'
+    );
+  }
 };
 
 export default sendEmail;

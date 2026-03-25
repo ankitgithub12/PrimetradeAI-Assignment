@@ -13,6 +13,13 @@ const ForgotPassword = () => {
     setLoading(true);
     setError('');
     setMessage('');
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid, complete email address (e.g., name@domain.com).');
+      setLoading(false);
+      return;
+    }
     
     try {
       const res = await api.post('/auth/forgotpassword', { email });
