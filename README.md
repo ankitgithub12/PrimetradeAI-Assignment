@@ -102,9 +102,31 @@ Make sure you have Node.js (v18+) installed. You will also need a MongoDB databa
 
 ---
 
-## 📡 API Endpoints
+## 🌍 Deployment Configuration
 
-The backend exposes a structured RESTful API.
+This project is built to seamlessly transition from `localhost` to production hosting (e.g., Vercel, Render) without altering any codebase files.
+
+### Deploying the Frontend (React/Vite)
+Your hosting provider allows you to inject Environment Variables. Simply add:
+*   `VITE_API_URL` = `https://your-deployed-backend-url.com/api/v1`
+
+*This allows the Axios instances to natively target the live backend.*
+
+### Deploying the Backend (Node)
+In the backend hosting dashboard, alongside your MongoDB and JWT variables, be sure to set:
+*   `CLIENT_URL` = `https://your-deployed-frontend-url.com`
+
+*The backend utilizes this variable to generate correct callback links for Password Reset emails dynamically.*
+
+---
+
+## 📡 API Endpoints & Swagger Documentation
+
+The backend exposes a structured RESTful API that is fully documented using **Swagger**. 
+
+To explore the interactive API documentation and test endpoints directly from your browser:
+1. Ensure your backend development server is running (`npm run dev` in the `/server` directory).
+2. Visit HTTP `http://localhost:5000/api-docs` in your browser.
 
 **Authentication Routes (`/api/v1/auth`)**
 *   `POST /register` - Register a new user (`user` or `admin`).
