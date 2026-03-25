@@ -7,9 +7,7 @@ import connectDB from './config/db.js';
 
 // Security packages
 import helmet from 'helmet';
-import mongoSanitize from 'express-mongo-sanitize';
 import rateLimit from 'express-rate-limit';
-import hpp from 'hpp';
 
 // Route files
 import auth from './routes/auth.js';
@@ -28,9 +26,6 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// Sanitize data (prevent NoSQL Injection)
-app.use(mongoSanitize());
-
 // Set security headers (protects against XSS and sniffing)
 app.use(helmet());
 
@@ -41,13 +36,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Prevent HTTP param pollution
-app.use(hpp());
-
 // Enable CORS
 app.use(cors());
 
-// Mount routers
+// Mount routersn   
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/tasks', tasks);
 
