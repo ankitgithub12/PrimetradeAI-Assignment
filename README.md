@@ -108,13 +108,13 @@ This project is built to seamlessly transition from `localhost` to production ho
 
 ### Deploying the Frontend (React/Vite)
 Your hosting provider allows you to inject Environment Variables. Simply add:
-*   `VITE_API_URL` = `https://your-deployed-backend-url.com/api/v1`
+*   `VITE_API_URL` = `https://primetradeai-assignment-server-402c.onrender.com/api/v1`
 
 *This allows the Axios instances to natively target the live backend.*
 
 ### Deploying the Backend (Node)
 In the backend hosting dashboard, alongside your MongoDB and JWT variables, be sure to set:
-*   `CLIENT_URL` = `[https://your-deployed-frontend-url.com](https://primetradeai-assignment-csb5.onrender.com/)`
+*   `CLIENT_URL` = `https://primetradeai-assignment-csb5.onrender.com`
 
 *The backend utilizes this variable to generate correct callback links for Password Reset emails dynamically.*
 
