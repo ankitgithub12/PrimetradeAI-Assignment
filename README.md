@@ -8,6 +8,14 @@
 TaskFlow is a beautifully designed, scalable full-stack task management application built as part of the backend developer internship assignment. It features robust role-based access control, JWT-based authentication, interactive UI elements, and email integration.
 
 ---
+## 🌐 Live Demo & Deployment
+
+This project has been fully deployed and is live for production testing:
+*   **Live Web App (Frontend)**: [https://primetradeai-assignment-csb5.onrender.com](https://primetradeai-assignment-csb5.onrender.com)
+*   **Live API Server (Backend)**: [https://primetradeai-assignment-server-402c.onrender.com](https://primetradeai-assignment-server-402c.onrender.com)
+
+---
+
 
 ## 🌟 Core Features
 
