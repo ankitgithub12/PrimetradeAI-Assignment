@@ -114,7 +114,7 @@ Your hosting provider allows you to inject Environment Variables. Simply add:
 
 ### Deploying the Backend (Node)
 In the backend hosting dashboard, alongside your MongoDB and JWT variables, be sure to set:
-*   `CLIENT_URL` = `https://your-deployed-frontend-url.com`
+*   `CLIENT_URL` = `[https://your-deployed-frontend-url.com](https://primetradeai-assignment-csb5.onrender.com/)`
 
 *The backend utilizes this variable to generate correct callback links for Password Reset emails dynamically.*
 
